@@ -1,284 +1,186 @@
 import tkinter as tk
 import mysql.connector as sql
 from datetime import datetime
-from datetime import timedelta
 import pyfiglet
-root = tk.Tk()
-c1=tk.Canvas(root, bg='alice blue',width=1000, height=1000, relief='raised')#creating a window 1000*1000
-c1.pack()
 
-mydb=sql.connect(host='localhost', user='root', passwd="2003",database="pams", use_pure=True)#establishing connection between Python&MySQL
-mycursor=mydb.cursor()
+class ParkingManagementSystem:
+    def __init__(self, root):
+        self.root = root
+        self.root.title("Parking Area Management System")
+        self.canvas = tk.Canvas(root, bg='alice blue', width=1000, height=1000, relief='raised')
+        self.canvas.pack()
 
-s = pyfiglet.figlet_format("PAMS",font="big")
-ns=s.center(90)
-print(ns)
-#Creating Table in SQL
-mycursor.execute("CREATE TABLE CARS(NAME CHAR(30),PASSWORD CHAR(20), CARDETAILS CHAR(30),COLOUR CHAR(20),SLOT int(20),ARRIVALTIME DATETIME,DEPARTURETIME DATETIME,TIMEDIFFERENCE CHAR(30), BILL CHAR(30));")
- 
-for i in range(1,11):
+        self.db = sql.connect(host='localhost', user='root', passwd="2003", database="pams", use_pure=True)
+        self.cursor = self.db.cursor()
 
-    def f():
-            
-            c1.delete("all")
-            l1=tk.Label(root, text="PAMS",bg='snow')
-            l1.config(font=('helvetica',30,"bold"))
-            c1.create_window(500,140,window=l1)
-                  
-                  
-                       
+        self.create_table()
+        self.last_assigned_slot = self.get_last_slot()
 
+        self.display_welcome()
 
-           
-            l2=tk.Label(root, text="PRESS 1 TO ENTER OR PRESS 2 TO LEAVE",bg='snow')# User Choice to Enter or Exit Parking Lot
-            l2.config(font=('helvetica',14))#size & font of above text 
-            c1.create_window(500,200,window=l2)#assigning coordinates to above text 
-            e1=tk.Entry(root)#creates entry box for user to type in and takes the entry 
-            c1.create_window(500,240,window=e1)# config of entry box
+    def create_table(self):
+        self.cursor.execute("""
+        CREATE TABLE IF NOT EXISTS CARS (
+            ID INT AUTO_INCREMENT PRIMARY KEY,
+            NAME CHAR(30),
+            PASSWORD CHAR(20),
+            CARDETAILS CHAR(30),
+            COLOUR CHAR(20),
+            SLOT INT(20),
+            ARRIVALTIME DATETIME,
+            DEPARTURETIME DATETIME,
+            TIMEDIFFERENCE CHAR(30),
+            BILL CHAR(30)
+        );
+        """)
+        self.db.commit()
 
-            def loop():
-                
-                n=e1.get()# getting value from e1
-                n1=int(n)#converting canvas text to int variable 
-                if n1==1:# check for entry 
-                    c1.delete("all")
-                    l0=tk.Label(root, text="ENTER THE FOLLOWING DETAILS:")#asking user to enter following details
-                    l0.config(font=('helvetica',18))
-                    c1.create_window(500,60,window=l0)
+    def get_last_slot(self):
+        self.cursor.execute("SELECT MAX(SLOT) FROM CARS")
+        result = self.cursor.fetchone()[0]
+        return result if result else 0
 
-                    l3=tk.Label(root, text="Name:")
-                    l3.config(font=('helvetica',14))
-                    c1.create_window(400,100,window=l3)
-                    e2=tk.Entry(root)
-                    c1.create_window(515,100,window=e2)
-                    
-     
-                    l4=tk.Label(root, text="Password:")
-                    l4.config(font=('helvetica',14))
-                    c1.create_window(400,150,window=l4)
-                    e3=tk.Entry(root)
-                    c1.create_window(515,150,window=e3)
-                    
-                    l5=tk.Label(root, text="Car Details:")
-                    l5.config(font=('helvetica',14))
-                    c1.create_window(400,200,window=l5)
-                    e4=tk.Entry(root)
-                    c1.create_window(515,200,window=e4)
-                    
-                    l6=tk.Label(root, text="Car Colour:")
-                    l6.config(font=('helvetica',14))
-                    c1.create_window(400,250,window=l6)
-                    e5=tk.Entry(root)
-                    c1.create_window(515,250,window=e5)
+    def display_welcome(self):
+        self.canvas.delete("all")
+        welcome_text = pyfiglet.figlet_format("PAMS", font="big")
+        self.canvas.create_text(500, 100, text=welcome_text, font=('Courier', 14))
+        
+        self.canvas.create_text(500, 200, text="PARKING AREA MANAGEMENT SYSTEM", font=('Helvetica', 24, 'bold'))
+        self.canvas.create_text(500, 250, text="1. Enter Parking Lot", font=('Helvetica', 14))
+        self.canvas.create_text(500, 280, text="2. Exit Parking Lot", font=('Helvetica', 14))
 
-   
-                    def sl():
-                        
-                        slot=1
-                        
-                        
-                        name1=e2.get()
-                        name=str(name1)
-                        pswd1=e3.get()
-                        pswd=str(pswd1)
-                        crdet1=e4.get()
-                        crdet=str(crdet1)
-                        color1=e5.get()
-                        color=str(color1)
-                        arvtime = datetime.now()
-                       
-                        
-                        mycursor.execute("INSERT INTO CARS"
-                                   "(NAME,PASSWORD,CARDETAILS,COLOUR,SLOT,ARRIVALTIME)"
-                                     "VALUES(%s,%s,%s,%s,%s,%s)",(name,pswd,crdet,color,slot,arvtime))#inserting user details into sql query 
-                        mydb.commit()
-                        
-                        c1.delete("all")
-                        
-                        l7=tk.Label(root, text="THE SLOT ASSIGNED TO YOU IS :")
-                        l7.config(font=('helvetica',14))
-                        c1.create_window(400,100,window=l7)
-                        l8=tk.Label(root, text=slot)
-                        l8.config(font=('helvetica',14))
-                        c1.create_window(580,100,window=l8)
-                        
-                        b2=tk.Button(text="NEXT",command=f, bg='brown',fg='white',font=('helvetica',9,'bold'))#creating a button 
-                        c1.create_window(460,150,window=b2)
-                        b2.update()
-                        
-                    
-                    
-                    b1=tk.Button(text="ENTER",command=sl,bg='brown',fg='white',font=('helvetica',9,'bold'))
-                    c1.create_window(515,300,window=b1)
-                    b1.update()
-         
-                    
-                       
-                if n1==2:#checking for exit
-                     
-                     c1.delete("all")
-                     def check():
-                         
-                         l9=tk.Label(root, text=" PLEASE ENTER YOUR PASSWORD:")#to verify the user 
-                         l9.config(font=('helvetica',14))
-                         c1.create_window(400,150,window=l9)
-                         e9=tk.Entry(root)
-                         c1.create_window(650,150,window=e9)
-                        
+        self.choice_entry = tk.Entry(self.root)
+        self.canvas.create_window(500, 320, window=self.choice_entry)
 
-                         l10=tk.Label(root, text=" PLEASE ENTER YOUR CAR DETAILS:")#to verify the user
-                         l10.config(font=('helvetica',14))
-                         c1.create_window(400,200,window=l10)
-                         e10=tk.Entry(root)
-                         c1.create_window(650,200,window=e10)
-                         
-                         def cbill():
-                              c1.delete("all")
-                              passcheck1=e9.get()
-                              passcheck=str(passcheck1)
-                              
-                              cdcheck1=e10.get()
-                              cdcheck=str(cdcheck1)
-                         
-                         
-                              deptime=datetime.now()
-                              deptimee=str(deptime)  
-                              sql_select_Query = "select * from Cars where password='"+passcheck+"' and cardetails='"+cdcheck+"';"#to check for the specific user whose password and cardetails match 
-                              mycursor.execute(sql_select_Query)
-                              
-                              
-                              records=mycursor.fetchall()#extracting the query 
-                         
-                              l11=tk.Label(root, text=" CUSTOMER DETAILS")# printing the bill
-                              l11.config(font=('helvetica',18,"bold"))
-                              c1.create_window(500,100,window=l11)
-                              i=100
-                              for row in records:#extracting rows from that query
-                                  
-                                  l12=tk.Label(root, text=" NAME:")
-                                  l12.config(font=('helvetica',14))
-                                  c1.create_window(300,200,window=l12)
-                                  l13=tk.Label(root, text=row[0])
-                                  l13.config(font=('helvetica',14))
-                                  c1.create_window(500,200,window=l13)
+        enter_button = tk.Button(self.root, text="Submit", command=self.process_choice, bg='brown', fg='white', font=('Helvetica', 9, 'bold'))
+        self.canvas.create_window(500, 360, window=enter_button)
 
-                                  l14=tk.Label(root, text=" CAR DETAILS:")
-                                  l14.config(font=('helvetica',14))
-                                  c1.create_window(300,250,window=l14)
-                                  l15=tk.Label(root, text=row[2])
-                                  l15.config(font=('helvetica',14))
-                                  c1.create_window(500,250,window=l15)
+    def process_choice(self):
+        choice = self.choice_entry.get()
+        if choice == '1':
+            self.enter_parking()
+        elif choice == '2':
+            self.exit_parking()
+        else:
+            self.show_error("Invalid choice. Please enter 1 or 2.")
 
-                                  l16=tk.Label(root, text=" CAR COLOUR:")
-                                  l16.config(font=('helvetica',14))
-                                  c1.create_window(300,300,window=l16)
-                                  l17=tk.Label(root, text=row[3])
-                                  l17.config(font=('helvetica',14))
-                                  c1.create_window(500,300,window=l17)
+    def enter_parking(self):
+        self.canvas.delete("all")
+        self.canvas.create_text(500, 60, text="ENTER YOUR DETAILS", font=('Helvetica', 18, 'bold'))
 
-                                  l18=tk.Label(root, text=" SLOT NUMBER:")
-                                  l18.config(font=('helvetica',14))
-                                  c1.create_window(300,350,window=l18)
-                                  l19=tk.Label(root, text=row[4])
-                                  l19.config(font=('helvetica',14))
-                                  c1.create_window(500,350,window=l19)
+        fields = [("Name:", 100), ("Password:", 150), ("Car Details:", 200), ("Car Colour:", 250)]
+        self.entries = {}
 
-                                  l20=tk.Label(root, text=" TICKET NUMBER:")
-                                  l20.config(font=('helvetica',14))
-                                  c1.create_window(300,400,window=l20)
-                                  l21=tk.Label(root, text=i)
-                                  l21.config(font=('helvetica',14))
-                                  c1.create_window(500,400,window=l21)
-                                  i=i+1
+        for (field, y) in fields:
+            self.canvas.create_text(400, y, text=field, font=('Helvetica', 14))
+            entry = tk.Entry(self.root)
+            self.canvas.create_window(515, y, window=entry)
+            self.entries[field] = entry
 
-                                  l22=tk.Label(root, text=" ENTRY TIME:")
-                                  l22.config(font=('helvetica',14))
-                                  c1.create_window(300,450,window=l22)
-                                  l23=tk.Label(root, text=row[5])
-                                  l23.config(font=('helvetica',14))
-                                  c1.create_window(500,450,window=l23)
-                                  l24=tk.Label(root, text="EXIT TIME:")
-                                  l24.config(font=('helvetica',14))
-                                  c1.create_window(300,500,window=l24)
-                                  l25=tk.Label(root, text=deptime)
-                                  l25.config(font=('helvetica',14))
-                                  c1.create_window(500,500,window=l25)
-                                  
-                                  
-                                  def calctimediff(x,y):#calculating time difference and extracting the minutes
-                                   
-                                        #datetimeformat='%Y-%M-%d%H:%M:%S.%f'
-                                        date1= deptime
-                                        date2= row[5]
-                                        diff= date1-date2
-                                        totsec = diff.total_seconds()
-                                        h = totsec//3600
-                                        m = (totsec%3600) // 60
-                                        m1=int(m)
-                                        sec =(totsec%3600)%60
-                                        l26=tk.Label(root, text="DURATION:")
-                                        l26.config(font=('helvetica',14))
-                                        c1.create_window(300,550,window=l26)
-                                        l27=tk.Label(root, text=diff)
-                                        l27.config(font=('helvetica',14))
-                                        c1.create_window(500,550,window=l27)
-                                        print("DURATION:",m1,"MINUTES",sec,"SECONDS")
-                                        return m
-          
-                                  td = calctimediff(deptime,row[5])
-                                  time=td
-                                  tdd=str(td)
-                                 
-                                  sum=0
-                                  def bill(time):#bill tariff
-                                        if time<60:
-                                            sum=15
-                                        elif time>60 and time<180:
-                                            sum=20
-                                        elif time>180 and time<360:
-                                            sum=30
-                                        elif time>360 and time<720:
-                                            sum=55
-                                        elif time>720 and time<1440:
-                                            sum=65
-                                        else:
-                                            print("You have exceeded the limit for parking. A tow truck has been called. Please contact the authorities to retrieve car")
-                                        return sum
-                    
-                                  a=bill(time)
-                                  
-   
-                                  print("TOTAL: Rs",a)
-                                  print("\t","THANK YOU!")
-                                  print("\t","DRIVE SAFE.")
-                                  l28=tk.Label(root, text="TOTAL:(₹)")#Displaying the amount 
-                                  l28.config(font=('helvetica',14))
-                                  c1.create_window(300,600,window=l28)
-                                
-                                  l30=tk.Label(root, text=a)
-                                  l30.config(font=('helvetica',14))
-                                  c1.create_window(505,600,window=l30)
-                                  
-                                  l31=tk.Label(root, text="THANK YOU!")
-                                  l31.config(font=('helvetica',14,"bold italic"))
-                                  c1.create_window(500,650,window=l31)
-                                  
-                                  l32=tk.Label(root, text="DRIVE SAFE.")
-                                  l32.config(font=('helvetica',14,"bold italic"))
-                                  c1.create_window(500,700,window=l32)
-                                  b4=tk.Button(text="NEXT",command=f, bg='brown',fg='white',font=('helvetica',9,'bold'))# for the next user to enter or leave
-                                  c1.create_window(500,750,window=b4)
-                                  b4.update()
-                                  
-                                
-                         b3=tk.Button(text="NEXT",command=cbill, bg='brown',fg='white',font=('helvetica',9,'bold'))
-                         c1.create_window(550,250,window=b3)
-                         b3.update()
-                     check()
-                     
+        enter_button = tk.Button(self.root, text="Park Car", command=self.park_car, bg='brown', fg='white', font=('Helvetica', 9, 'bold'))
+        self.canvas.create_window(515, 300, window=enter_button)
 
-            b=tk.Button(text="Enter",command=loop,bg='brown',fg='white',font=('helvetica',9,'bold'))
-            c1.create_window(500,280,window=b)    
-            
-    f()
+    def park_car(self):
+        self.last_assigned_slot += 1
+        name = self.entries["Name:"].get()
+        password = self.entries["Password:"].get()
+        car_details = self.entries["Car Details:"].get()
+        car_colour = self.entries["Car Colour:"].get()
+        arrival_time = datetime.now()
+
+        self.cursor.execute("""
+        INSERT INTO CARS (NAME, PASSWORD, CARDETAILS, COLOUR, SLOT, ARRIVALTIME)
+        VALUES (%s, %s, %s, %s, %s, %s)
+        """, (name, password, car_details, car_colour, self.last_assigned_slot, arrival_time))
+        self.db.commit()
+
+        self.show_parking_info(self.last_assigned_slot)
+
+    def show_parking_info(self, slot):
+        self.canvas.delete("all")
+        self.canvas.create_text(500, 100, text=f"Your assigned parking slot is: {slot}", font=('Helvetica', 18, 'bold'))
+        self.canvas.create_text(500, 150, text="Please remember your slot number!", font=('Helvetica', 14))
+        
+        back_button = tk.Button(self.root, text="Back to Main Menu", command=self.display_welcome, bg='brown', fg='white', font=('Helvetica', 9, 'bold'))
+        self.canvas.create_window(500, 200, window=back_button)
+
+    def exit_parking(self):
+        self.canvas.delete("all")
+        self.canvas.create_text(500, 60, text="EXIT PARKING", font=('Helvetica', 18, 'bold'))
+
+        self.canvas.create_text(400, 120, text="Password:", font=('Helvetica', 14))
+        self.password_entry = tk.Entry(self.root)
+        self.canvas.create_window(515, 120, window=self.password_entry)
+
+        self.canvas.create_text(400, 170, text="Car Details:", font=('Helvetica', 14))
+        self.car_details_entry = tk.Entry(self.root)
+        self.canvas.create_window(515, 170, window=self.car_details_entry)
+
+        exit_button = tk.Button(self.root, text="Exit Parking", command=self.process_exit, bg='brown', fg='white', font=('Helvetica', 9, 'bold'))
+        self.canvas.create_window(515, 220, window=exit_button)
+
+    def process_exit(self):
+        password = self.password_entry.get()
+        car_details = self.car_details_entry.get()
+
+        self.cursor.execute("""
+        SELECT * FROM CARS 
+        WHERE PASSWORD = %s AND CARDETAILS = %s AND DEPARTURETIME IS NULL
+        """, (password, car_details))
+        
+        car = self.cursor.fetchone()
+        if car:
+            self.show_bill(car)
+        else:
+            self.show_error("Car not found or already exited. Please check your details.")
+
+    def show_bill(self, car):
+        departure_time = datetime.now()
+        duration = departure_time - car[6]  # car[6] is ARRIVALTIME
+        minutes = duration.total_seconds() / 60
+
+        bill = self.calculate_bill(minutes)
+
+        self.cursor.execute("""
+        UPDATE CARS 
+        SET DEPARTURETIME = %s, TIMEDIFFERENCE = %s, BILL = %s 
+        WHERE ID = %s
+        """, (departure_time, str(duration), str(bill), car[0]))
+        self.db.commit()
+
+        self.canvas.delete("all")
+        self.canvas.create_text(500, 60, text="PARKING BILL", font=('Helvetica', 18, 'bold'))
+        self.canvas.create_text(500, 100, text=f"Name: {car[1]}", font=('Helvetica', 14))
+        self.canvas.create_text(500, 130, text=f"Car Details: {car[3]}", font=('Helvetica', 14))
+        self.canvas.create_text(500, 160, text=f"Slot: {car[5]}", font=('Helvetica', 14))
+        self.canvas.create_text(500, 190, text=f"Duration: {duration}", font=('Helvetica', 14))
+        self.canvas.create_text(500, 220, text=f"Total Bill: ₹{bill}", font=('Helvetica', 14, 'bold'))
+
+        back_button = tk.Button(self.root, text="Back to Main Menu", command=self.display_welcome, bg='brown', fg='white', font=('Helvetica', 9, 'bold'))
+        self.canvas.create_window(500, 260, window=back_button)
+
+    def calculate_bill(self, minutes):
+        if minutes < 60:
+            return 15
+        elif minutes < 180:
+            return 20
+        elif minutes < 360:
+            return 30
+        elif minutes < 720:
+            return 55
+        else:
+            return 65
+
+    def show_error(self, message):
+        self.canvas.delete("all")
+        self.canvas.create_text(500, 100, text="Error", font=('Helvetica', 18, 'bold'))
+        self.canvas.create_text(500, 150, text=message, font=('Helvetica', 14))
+        
+        back_button = tk.Button(self.root, text="Back to Main Menu", command=self.display_welcome, bg='brown', fg='white', font=('Helvetica', 9, 'bold'))
+        self.canvas.create_window(500, 200, window=back_button)
+
+if __name__ == "__main__":
+    root = tk.Tk()
+    app = ParkingManagementSystem(root)
+    root.mainloop()
 
